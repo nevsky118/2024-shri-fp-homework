@@ -36,11 +36,8 @@ const isEqualTo = R.curry((num, value) => R.equals(num, value));
 
 const isOne = isEqualTo(1);
 const isTwo = isEqualTo(2);
-// const isThree = isEqualTo(3);
 const isFour = isEqualTo(4);
 
-
-// Функция для подсчета количества фигур определенного цвета
 const countFiguresByColor = (color) => R.compose(
     R.length,
     R.filter(R.equals(color)),
@@ -50,8 +47,9 @@ const countFiguresByColor = (color) => R.compose(
 const countGreenFigures = countFiguresByColor('green');
 const countBlueFigures = countFiguresByColor('blue');
 const countRedFigures = countFiguresByColor('red');
-const countWhiteFigures = countFiguresByColor('white');
 const countOrangeFigures = countFiguresByColor('orange');
+
+const isGreaterThanOrEqualTo = (number) => R.gte(R.__, number);
 
 // 1. Красная звезда, зеленый квадрат, все остальные белые.
 export const validateFieldN1 = R.allPass([
@@ -63,7 +61,7 @@ export const validateFieldN1 = R.allPass([
 
 // 2. Как минимум две фигуры зеленые.
 export const validateFieldN2 = R.compose(
-    R.gte(R.__, 2),
+    isGreaterThanOrEqualTo(2),
     countGreenFigures
 );
 
@@ -84,35 +82,44 @@ export const validateFieldN5 = R.pipe(
     R.reject(isWhite),
     R.countBy(R.identity),
     R.values,
-    R.any(R.gte(R.__, 3))
+    R.any(isGreaterThanOrEqualTo(3))
 )
 
+const countGreenFiguresAndCheckIfTwo = R.compose(isTwo, countGreenFigures);
+const countRedFiguresAndCheckIfOne = R.compose(isOne, countRedFigures);
 // 6. Ровно две зеленые фигуры (одна из зелёных – это треугольник), плюс одна красная. Четвёртая оставшаяся любого доступного цвета, но не нарушающая первые два условия
 export const validateFieldN6 = R.allPass([
-    R.compose(isTwo, countGreenFigures),
+    countGreenFiguresAndCheckIfTwo,
     isGreenTriangle,
-    R.compose(isOne, countRedFigures)
+    countRedFiguresAndCheckIfOne
 ]);
 
+const countOrangeFiguresAndCheckIfFour = R.compose(isFour, countOrangeFigures);
 // 7. Все фигуры оранжевые.
 export const validateFieldN7 = R.allPass([
-    R.compose(isFour, countOrangeFigures)
+    countOrangeFiguresAndCheckIfFour
 ])
 
+const isNotRedStar = R.complement(isRedStar);
+const isNotWhiteStar = R.complement(isWhiteStar);
 // 8. Не красная и не белая звезда, остальные – любого цвета.
 export const validateFieldN8 = R.allPass([
-    R.complement(isRedStar),
-    R.complement(isWhiteStar)
+    isNotRedStar,
+    isNotWhiteStar
 ])
 
+const isFourGreenFigures = R.compose(isFour, countGreenFigures);
 // 9. Все фигуры зеленые.
 export const validateFieldN9 = R.allPass([
-    R.compose(isFour, countGreenFigures)
+    isFourGreenFigures
 ]);
 
+const isNotWhiteTriangle = R.complement(isWhiteTriangle);
+const isNotWhiteSquare = R.complement(isWhiteSquare);
+const isTriangleAndSquareSameColor = R.converge(R.equals, [R.prop('triangle'), R.prop('square')]);
 // 10. Треугольник и квадрат одного цвета (не белого), остальные – любого цвета
 export const validateFieldN10 = R.allPass([
-    R.complement(isWhiteTriangle),
-    R.complement(isWhiteSquare),
-    R.converge(R.equals, [R.prop('triangle'), R.prop('square')])
+    isNotWhiteTriangle,
+    isNotWhiteSquare,
+    isTriangleAndSquareSameColor
 ]);
